@@ -15,7 +15,6 @@
 
 	<link rel="stylesheet" href="css/style.css">
 
-	<script src="js/libs/modernizr-2.0.6.min.js"></script>
 </head>
 <body>
 
@@ -32,7 +31,7 @@
 			<article>
 
 				<header>
-					<h1 id="<?php print $blog_name; ?>"><img class="avatar" src="blogs/<?php print $blog_name ?>/avatar.png" /><?php print $blog_name; ?>.tumblr.com</h1>
+                    <h1 id="<?php print $blog_name; ?>"><a href="http://<?php print $blog_name ?>.tumblr.com" target="_blank"><img class="avatar" src="blogs/<?php print $blog_name ?>/avatar.png" /><?php print $blog_name; ?>.tumblr.com</a></h1>
 					<p></p>
 				</header>
 
