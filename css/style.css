@@ -268,7 +268,7 @@ nav a:hover{
   box-shadow: 0 1px 5px rgba(0,0,0,.5);
 }
 
-section ul {
+article ul {
   list-style: none;
   padding: 0;
 }
@@ -320,7 +320,14 @@ body {
   color: white;
 }
 
-section {
+article section {
   float: left;
-  width: 255px;
+  width: 450px;
+  border: 3px solid white;
+  border-radius: 5px;
+  background: white;
+  color: #333;
+  padding: 0 10px;
+  margin: 5px;
+  overflow: hidden;
 }

@@ -10,6 +10,9 @@ $(window).load(function() {
 	    itemMargin: 5
 	});
 
+	// hide blog info on start
+	$('#blog-info').hide();
+
 	$('.blog-icon').hover(function() {
 		var blogName = $(this).data('blog');
 		var info = window.blogs[blogName].info;
@@ -42,7 +45,7 @@ $(window).load(function() {
 			var post = window.blogs[blogName].posts[i];
 			for(var j = 0; j < post.photos.length; j++) {
 				html += '<li>';
-				html += '<img src="' + post.photos[j] + '" style="width: 250px"/>';
+				html += '<img src="' + post.photos[j] + '" style="width: 450px"/>';
 				html += '</li>';
 			}
 			html += '</ul>';
@@ -64,4 +67,21 @@ $(window).load(function() {
 		$('#main article').width($('#main').width());
 	});
 
+	// show hide icons
+	$(document).mousemove(function(e) {
+		window.barVisible = window.barVisible == undefined  ? true : window.barVisible;
+		window.barAnimating = window.barAnimating == undefined  ?  false : window.barAnimating;
+		var y = e.pageY;
+		y += $('html').offset().top;
+		if (window.barVisible && y > 90 && !window.barAnimating) {
+			window.barVisible = false;
+			window.barAnimating = true;
+			$('.flexslider').animate({'margin-top': '-=65'}, 1000, function() {window.barAnimating = false});
+		}
+		else if (window.barVisible == false && y < 20 && window.barAnimating == false) {
+			window.barVisible = true;
+			window.barAnimating = true;
+			$('.flexslider').animate({'margin-top': '+=65'}, 1000, function() {window.barAnimating = false});
+		}
+	});
 });
