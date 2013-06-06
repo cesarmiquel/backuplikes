@@ -6,8 +6,10 @@
 // 
 
 
-$api_key    = '<your api key>';
-$blog       = '<your blog name>.tumblr.com';
+// This are global so that all functions can use them to pull info from
+// Tumblr.
+$api_key    = '33j1VK6U6qgjzHyjkZvpbfS3ECy4R4bWgUrK20RfnYqLu7Hnhu';
+$blog       = 'hypro.tumblr.com';
 
 // Get number of likes in this blog
 $url = sprintf('http://api.tumblr.com/v2/blog/%s/info?api_key=%s',
@@ -41,7 +43,9 @@ for($offset = 0; $offset < $num_likes; $offset += 20) {
 file_put_contents('posts.json', json_encode($all_posts));
 
 // Generate index.html
-generate_index($all_posts);
+//generate_index($all_posts);
+
+generate_webapp($all_posts);
 
 exit(0);
 
@@ -130,7 +134,58 @@ function generate_index($posts) {
     ob_end_clean();
     
     // write index.html from parsed template
-    file_put_contents('index.html', $result);
+    file_put_contents('index-flat.html', $result);
+}
+
+// This generates a webapp to view posts
+function generate_webapp($posts) {
+    global $api_key;
+
+    $view_data = array(
+        'blogs' => array(),
+    );
+
+    // Group results by blog
+    foreach($posts as $post) {
+
+        if ($post->type != 'photo') {
+            continue;
+        }
+
+        if (!isset($view_data['blogs'][$post->blog_name])) {
+            $view_data['blogs'][$post->blog_name] = (object) array('info' => '', 'posts' => array());
+
+            $url = sprintf('http://api.tumblr.com/v2/blog/%s.tumblr.com/info?api_key=%s',
+                $post->blog_name,
+                $api_key);
+
+            $result    = json_decode(file_get_contents($url));
+            $view_data['blogs'][$post->blog_name]->info = $result->response->blog;
+            $view_data['blogs'][$post->blog_name]->avatar = 'blogs/' . $post->blog_name . '/avatar.png';
+        }
+
+        // get path to photos
+        $photos = array();
+        foreach($post->photos as $i => $photo) {
+            $filepath = sprintf('%s/photo%03d.png', create_post_path($post), $i + 1);
+            $photos[] = $filepath;
+        }
+
+        $view_data['blogs'][$post->blog_name]->posts[] = (object) array(
+            'photos' => $photos,
+            'caption' => $post->caption,
+        );
+    }
+
+    // Send blogs to template (index.tpl.php)
+    $view = (object) $view_data;
+    ob_start();
+    include 'index-webapp.tpl.php';
+    $result = ob_get_contents();
+    ob_end_clean();
+    
+    // write index.html from parsed template
+    file_put_contents('index-webapp.html', $result);
 }
 
 // ------------------------------------------------------------------------
