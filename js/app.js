@@ -76,12 +76,12 @@ $(window).load(function() {
 		if (window.barVisible && y > 90 && !window.barAnimating) {
 			window.barVisible = false;
 			window.barAnimating = true;
-			$('.flexslider').animate({'margin-top': '-=65'}, 1000, function() {window.barAnimating = false});
+			$('.flexslider').animate({'margin-top': '-=65'}, 250, function() {window.barAnimating = false});
 		}
 		else if (window.barVisible == false && y < 20 && window.barAnimating == false) {
 			window.barVisible = true;
 			window.barAnimating = true;
-			$('.flexslider').animate({'margin-top': '+=65'}, 1000, function() {window.barAnimating = false});
+			$('.flexslider').animate({'margin-top': '+=65'}, 250, function() {window.barAnimating = false});
 		}
 	});
 });
