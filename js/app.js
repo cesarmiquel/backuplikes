@@ -51,9 +51,9 @@ $(window).load(function() {
 		var $container = $('.blog-posts');
 		$container.imagesLoaded(function(){
 			$container.masonry({
-		    	itemSelector : '.blog-post',
-		    	columnWidth : 500
-		  	});
+				itemSelector : '.blog-post',
+				columnWidth : 500
+			});
 		});
 
 		// Save blog name
@@ -63,6 +63,15 @@ $(window).load(function() {
 	$(window).resize(function() {
 		// force width
 		$('#main article').width($('#main').width());
+
+		// Run masonry
+		var $container = $('.blog-posts');
+		$container.imagesLoaded(function(){
+			$container.masonry({
+				itemSelector : '.blog-post',
+				columnWidth : 500
+			});
+		});
 	});
 
 	// show hide icons
