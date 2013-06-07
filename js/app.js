@@ -112,7 +112,7 @@ $(window).load(function() {
 			title = title.substr(0, 30) + '...';
 		}
 		var html = '<img src="' + window.blogs[blogName].avatar + '" />' + '<h2>' + title + '</h2>';
-		html += '<p><a href="' + info.url + '" target="_blank">' + info.url + '</a></p>';
+		html += '<p><a href="' + info.url + '" target="_blank">' + info.url + '</a> - <a href="' + info.url + 'archive" target="_blank">archive</a></p>';
 		$('#blog-info').html(html);
 		$('#blog-info').show();
 	}

@@ -315,6 +315,10 @@ a:hover {
   margin: 0;
 }
 
+#blog-info p {
+  margin-top: 8px;
+}
+
 body {
   background: #111;
   color: white;
