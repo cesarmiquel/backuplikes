@@ -69,7 +69,9 @@ $(window).load(function() {
 		$container.imagesLoaded(function(){
 			$container.masonry({
 				itemSelector : '.blog-post',
-				columnWidth : 500
+				columnWidth : 500,
+				isFitWidth: true,
+				containerStyle: {position: 'absolute'},
 			});
 		});
 	});

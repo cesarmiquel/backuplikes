@@ -239,7 +239,7 @@ nav a:hover{
    =============== */
 
     .wrapper {
-        width:1026px; /* 1140px - 10% for margins */
+        width: 95%; /* 1140px - 10% for margins */
         margin:0 auto;
     }
 }
@@ -279,6 +279,7 @@ article ul {
 
 #nav {
   position: fixed;
+  z-index: 100;
 }
 
 #nav img {
@@ -322,10 +323,6 @@ a:hover {
 body {
   background: #111;
   color: white;
-}
-
-.blog-posts {
-  z-index: -100;
 }
 
 .blog-post {
