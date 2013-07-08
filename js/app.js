@@ -21,9 +21,17 @@ $(window).load(function() {
 	});
 
 	$('.blog-icon').click(function() {
+    // set opacity on previously selected blog to 1
+    if (window.selectedBlog != '') {
+      $img = $("[data-blog='" + window.selectedBlog + "'] img");
+      if( $img) {
+        $img.css('opacity', 1);
+      }
+    }
+
 		var blogName = $(this).data('blog');
 		var info = window.blogs[blogName].info;
-
+ 
 		var html = '<article class="blog-posts">';
 		for(var i = 0; i < window.blogs[blogName].posts.length; i++) {
 			html += '<section class="blog-post">';
@@ -58,6 +66,13 @@ $(window).load(function() {
 
 		// Save blog name
 		window.selectedBlog = blogName;
+
+    // change opacity on selected blog
+    $img = $("[data-blog='" + selectedBlog + "'] img");
+    if( $img) {
+      $img.css('opacity', 0.3);
+    }
+
 	});
 
 	$(window).resize(function() {
@@ -101,6 +116,7 @@ $(window).load(function() {
 	// helpers
 	function showBlogInfo(blogName) {
 		var info = window.blogs[blogName].info;
+		var numPosts = window.blogs[blogName].posts.length
 		var title = '';
 		if (info.title) {
 			title = info.title;
@@ -114,7 +130,9 @@ $(window).load(function() {
 			title = title.substr(0, 30) + '...';
 		}
 		var html = '<img src="' + window.blogs[blogName].avatar + '" />' + '<h2>' + title + '</h2>';
-		html += '<p><a href="' + info.url + '" target="_blank">' + info.url + '</a> - <a href="' + info.url + 'archive" target="_blank">archive</a></p>';
+		html += '<p><a href="' + info.url + '" target="_blank">' + info.url + '</a>'
+		  + '- <a href="' + info.url + 'archive" target="_blank">archive</a><br/>'
+		  + '<span class="num-posts">' + numPosts + ' posts</span></p>';
 		$('#blog-info').html(html);
 		$('#blog-info').show();
 	}
