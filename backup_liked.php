@@ -24,9 +24,11 @@ $url = sprintf('http://api.tumblr.com/v2/blog/%s/info?api_key=%s',
     $api_key);
 
 $result    = json_decode(file_get_contents($url));
-$num_likes = $result->response->blog->likes;
 
-$all_posts = array();
+// There seems to be an upper limit on thenumber of likes available to the API: 1000. :-(
+// https://groups.google.com/forum/#!searchin/tumblr-api/likes|sort:relevance/tumblr-api/exUSE_ySM1g/om4zWgRlnsEJ
+$num_likes = max($result->response->blog->likes, 1000);
+
 $page_count = 20;
 for($offset = 0; $offset < $num_likes; $offset += $page_count) {
 
@@ -43,17 +45,9 @@ for($offset = 0; $offset < $num_likes; $offset += $page_count) {
     $result  = json_decode($content);
 
     save_posts($result->response->liked_posts);
-
-    foreach($result->response->liked_posts as $post) {
-        $all_posts[$post->id] = $post;
-    }
-
 }
 
-// Save all info a .json file
-file_put_contents($dest_dir . '/posts.json', json_encode($all_posts));
-
-generate_webapp($all_posts);
+generate_webapp($dest_dir);
 
 exit(0);
 
@@ -133,35 +127,49 @@ function generate_webapp($posts) {
     );
 
     // Group results by blog
-    foreach($posts as $post) {
+    //foreach($posts as $post) {
+    $blogs = my_scan_dir($dest_dir . '/blogs');
+    foreach($blogs as $blog_name) {
 
-        if ($post->type != 'photo') {
+        if ($blog_name == '.' || $blog_name == '..')
             continue;
+
+        $posts_dirs = my_scan_dir($dest_dir . '/blogs/' . $blog_name);
+        foreach($posts_dirs as $post_dir) {
+
+            if ($post_dir == '.' || $post_dir == '..')
+                continue;
+
+            $post = json_decode(file_get_contents($dest_dir . '/blogs/' . $blog_name . '/' . $post_dir . '/post.json'));
+
+            if ($post->type != 'photo') {
+                continue;
+            }
+
+            if (!isset($view_data['blogs'][$post->blog_name])) {
+                $view_data['blogs'][$post->blog_name] = (object) array('info' => '', 'posts' => array());
+
+                $url = sprintf('http://api.tumblr.com/v2/blog/%s.tumblr.com/info?api_key=%s',
+                    $post->blog_name,
+                    $api_key);
+
+                $result    = json_decode(file_get_contents($url));
+                $view_data['blogs'][$post->blog_name]->info = $result->response->blog;
+                $view_data['blogs'][$post->blog_name]->avatar = 'blogs/' . $post->blog_name . '/avatar.png';
+            }
+
+            // get path to photos
+            $photos = array();
+            foreach($post->photos as $i => $photo) {
+                $filepath = sprintf('%s/photo%03d.png', create_post_path($post), $i + 1);
+                $photos[] = $filepath;
+            }
+
+            $view_data['blogs'][$post->blog_name]->posts[] = (object) array(
+                'photos' => $photos,
+                'caption' => $post->caption,
+            );
         }
-
-        if (!isset($view_data['blogs'][$post->blog_name])) {
-            $view_data['blogs'][$post->blog_name] = (object) array('info' => '', 'posts' => array());
-
-            $url = sprintf('http://api.tumblr.com/v2/blog/%s.tumblr.com/info?api_key=%s',
-                $post->blog_name,
-                $api_key);
-
-            $result    = json_decode(file_get_contents($url));
-            $view_data['blogs'][$post->blog_name]->info = $result->response->blog;
-            $view_data['blogs'][$post->blog_name]->avatar = 'blogs/' . $post->blog_name . '/avatar.png';
-        }
-
-        // get path to photos
-        $photos = array();
-        foreach($post->photos as $i => $photo) {
-            $filepath = sprintf('%s/photo%03d.png', create_post_path($post), $i + 1);
-            $photos[] = $filepath;
-        }
-
-        $view_data['blogs'][$post->blog_name]->posts[] = (object) array(
-            'photos' => $photos,
-            'caption' => $post->caption,
-        );
     }
 
     // Send blogs to template (index.tpl.php)
@@ -213,4 +221,26 @@ function create_post_path($post) {
         $slug = '';
     }
     return 'blogs/' . $post->blog_name . '/' . $post->id . $slug;
+}
+
+// Scan directories and filter files and unwanted directories (. and ..)
+function my_scan_dir($source_dir) {
+
+    $dirs = scandir($source_dir);
+
+    $result = array();
+    foreach($dirs as $dir) {
+        // skip . and ..
+        if ($dir == '.' || $dir == '.') {
+            continue;
+        }
+
+        // skip any files
+        if (!is_dir($source_dir . '/' . $dir)) {
+            continue;
+        }
+
+        $result[] = $dir;
+    }
+    return($result);
 }
