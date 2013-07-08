@@ -8,8 +8,15 @@
 
 // This are global so that all functions can use them to pull info from
 // Tumblr.
-$api_key    = '33j1VK6U6qgjzHyjkZvpbfS3ECy4R4bWgUrK20RfnYqLu7Hnhu';
-$blog       = 'hypro.tumblr.com';
+$api_key    = '<your api key here>';
+$blog       = '<your blog here>.tumblr.com';
+
+if (count($argv) != 2) {
+    print "Usage: $argv[0] <dest-dir>\n\n";
+    exit(0);
+}
+
+$dest_dir = $argv[1];
 
 // Get number of likes in this blog
 $url = sprintf('http://api.tumblr.com/v2/blog/%s/info?api_key=%s',
@@ -20,10 +27,11 @@ $result    = json_decode(file_get_contents($url));
 $num_likes = $result->response->blog->likes;
 
 $all_posts = array();
-for($offset = 0; $offset < $num_likes; $offset += 20) {
+$page_count = 20;
+for($offset = 0; $offset < $num_likes; $offset += $page_count) {
 
     // Create API url
-    $url = sprintf('http://api.tumblr.com/v2/blog/%s/likes?api_key=%s&limit=20&offset=%d',
+    $url = sprintf('http://api.tumblr.com/v2/blog/%s/likes?api_key=%s&limit=' . $page_count . '&offset=%d',
         $blog,
         $api_key,
         $offset);
@@ -36,14 +44,14 @@ for($offset = 0; $offset < $num_likes; $offset += 20) {
 
     save_posts($result->response->liked_posts);
 
-    $all_posts = array_merge($all_posts, $result->response->liked_posts);
+    foreach($result->response->liked_posts as $post) {
+        $all_posts[$post->id] = $post;
+    }
+
 }
 
 // Save all info a .json file
-file_put_contents('posts.json', json_encode($all_posts));
-
-// Generate index.html
-//generate_index($all_posts);
+file_put_contents($dest_dir . '/posts.json', json_encode($all_posts));
 
 generate_webapp($all_posts);
 
@@ -51,6 +59,8 @@ exit(0);
 
 
 function save_posts($posts) {
+
+    global $dest_dir;
 
     // Loop through results
     foreach($posts as $post) {
@@ -61,7 +71,7 @@ function save_posts($posts) {
         }
 
         // Save avatar
-        $blog_path   = "blogs/$post->blog_name";
+        $blog_path   = "$dest_dir/blogs/$post->blog_name";
         $avatar_path = "$blog_path/avatar.png";
         if (!file_exists($avatar_path)) {
             if (!file_exists($blog_path)) {
@@ -70,18 +80,20 @@ function save_posts($posts) {
             copy("http://api.tumblr.com/v2/blog/$post->blog_name.tumblr.com/avatar", $avatar_path);    
         }
 
-        // Check if we already downloaded this post and download
-        // if we haven't.
+        // Path were this post will be stored
         $path = create_post_path($post);
-        if (!file_exists($path)) {
+
+        // Download and save photos if we haven't done so
+        if (!file_exists($dest_dir . '/' . $path)) {
             echo "Processing $path...\n";
-            mkdir($path, 0777, TRUE);
+
+            mkdir($dest_dir . '/' . $path, 0777, TRUE);
             $count = 1;
             // caption and comment to add for all photos
             $comment = get_comment($post);
             $caption = get_caption($post);
             foreach($post->photos as $photo) {
-                $filepath = sprintf('%s/photo%03d', $path, $count++);
+                $filepath = sprintf('%s/%s/photo%03d', $dest_dir, $path, $count++);
                 copy($photo->original_size->url, $filepath);
 
                 // if GIF just move otherwise convert to PNG
@@ -102,44 +114,19 @@ function save_posts($posts) {
         else {
             echo "Skipping $path. Exists.\n";
         }
-    }
-}
 
-function generate_index($posts) {
-
-    $view_data = array(
-        'title' => 'This is my blog',
-        'blogs' => array(),
-    );
-
-    // Group results by blog
-    foreach($posts as $post) {
-
-        if ($post->type != 'photo') {
-            continue;
+        // Save post json if not already saved
+        if (!file_exists($dest_dir . '/' . $path . '/post.json')) {
+            // save post json
+            file_put_contents($dest_dir . '/' . $path . '/post.json', json_encode($post));            
         }
-
-        if (!isset($view_data['blogs'][$post->blog_name])) {
-            $view_data['blogs'][$post->blog_name] = array();
-        }
-
-        $view_data['blogs'][$post->blog_name][] = $post;
     }
-
-    // Send blogs to template (index.tpl.php)
-    $view = (object) $view_data;
-    ob_start();
-    include 'index.tpl.php';
-    $result = ob_get_contents();
-    ob_end_clean();
-    
-    // write index.html from parsed template
-    file_put_contents('index-flat.html', $result);
 }
 
 // This generates a webapp to view posts
 function generate_webapp($posts) {
     global $api_key;
+    global $dest_dir;
 
     $view_data = array(
         'blogs' => array(),
@@ -185,7 +172,7 @@ function generate_webapp($posts) {
     ob_end_clean();
     
     // write index.html from parsed template
-    file_put_contents('index-webapp.html', $result);
+    file_put_contents($dest_dir . '/index-webapp.html', $result);
 }
 
 // ------------------------------------------------------------------------
